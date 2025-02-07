@@ -28,7 +28,14 @@ async function bootstrap() {
    const database = client.db("onlie-embassy");
    const usersCollections = database.collection("Users");
 
+//users get from database
+app.get('/users',async(res,req)=>{
+  const query={};
+  const users=await usersCollections.find(query).toArray();
+ req.send(users)
+})
 
+//user post from frontend to database
     app.post('/users',async(req,res)=>{
       const user =req.body;
       //console.log(user);
