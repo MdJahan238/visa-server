@@ -1,12 +1,15 @@
 const express = require('express')
-require('dotenv').config()
+require('dotenv').config();
+const cors = require('cors');
 const { MongoClient, ServerApiVersion } = require('mongodb');
+
 const app = express()
 const port = 3000
-//pass:  user: 
 
 
-// Add your connection string into your application code
+//middleware
+app.use(cors())
+app.use(express.json())
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@mydbcluster.xdx0p.mongodb.net/?retryWrites=true&w=majority&appName=MyDBCluster`;
 
@@ -21,9 +24,20 @@ const client = new MongoClient(uri, {
 
 async function bootstrap() {
   try {
-    await client.connect();
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+   await client.connect();
+   const database = client.db("onlie-embassy");
+   const usersCollections = database.collection("Users");
+
+
+    app.post('/users',async(req,res)=>{
+      const user =req.body;
+      //console.log(user);
+      
+      const result =await usersCollections.insertOne(user);
+      //console.log(result);
+      res.send(result); 
+    })
+
   } finally {
     //await client.close(); // eta majhe majhe database off kore dey
   }
