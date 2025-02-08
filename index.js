@@ -1,7 +1,7 @@
 const express = require('express')
 require('dotenv').config();
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 const app = express()
 const port = 3000
@@ -34,6 +34,36 @@ app.get('/users',async(res,req)=>{
   const users=await usersCollections.find(query).toArray();
  req.send(users)
 })
+
+
+//is admin check
+app.get('/users/admin/:email',async(req,res)=>{
+  const email =req.params.email;        //front-end email call
+  //console.log(email);
+  const query = {email:email}         //database:front-end email call
+  const user =await usersCollections.findOne(query)
+  //console.log(user);
+  res.send({isAdmin:user?.role === 'admin' })
+  
+})
+
+//make admin / update with set role
+app.put('/users/admin/:id',async(req,res)=>{
+  //console.log("route matched");
+  const id = req.params.id;
+  //console.log(id);
+  const filter = {_id: new ObjectId(id)}
+  const option ={upsert: true}
+  const updatedDoc ={
+    $set:{
+      role:'Admin'
+    }
+  }
+  const result =await usersCollections.updateOne(filter,updatedDoc,option);
+  res.send(result);
+})
+
+
 
 //user post from frontend to database
     app.post('/users',async(req,res)=>{
