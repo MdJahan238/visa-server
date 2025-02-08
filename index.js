@@ -27,6 +27,17 @@ async function bootstrap() {
    await client.connect();
    const database = client.db("onlie-embassy");
    const usersCollections = database.collection("Users");
+   const appointmentOptionCollections = database.collection("AppointmentOptions");
+   
+
+
+// Service Option
+app.get('/appointmentOptions',async(req,res)=>{
+  const query = {};
+  const result = await appointmentOptionCollections.find(query).toArray();
+  res.send(result)
+})
+
 
 //users get from database
 app.get('/users',async(res,req)=>{
@@ -34,6 +45,8 @@ app.get('/users',async(res,req)=>{
   const users=await usersCollections.find(query).toArray();
  req.send(users)
 })
+
+
 
 
 //is admin check
@@ -46,6 +59,8 @@ app.get('/users/admin/:email',async(req,res)=>{
   res.send({isAdmin:user?.role === 'admin' })
   
 })
+
+
 
 //make admin / update with set role
 app.put('/users/admin/:id',async(req,res)=>{
@@ -74,6 +89,23 @@ app.put('/users/admin/:id',async(req,res)=>{
       //console.log(result);
       res.send(result); 
     })
+
+
+
+    //delete user
+    app.delete('/users/:id',async(req,res)=>{
+      const id = req.params.id;
+         //console.log(id);
+      const query = {_id: new ObjectId(id)}
+      const result =await usersCollections.deleteOne(query);
+      res.send(result);
+
+      
+    })
+
+
+
+
 
   } finally {
     //await client.close(); // eta majhe majhe database off kore dey
