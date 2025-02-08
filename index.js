@@ -27,15 +27,66 @@ async function bootstrap() {
    await client.connect();
    const database = client.db("onlie-embassy");
    const usersCollections = database.collection("Users");
+   const bookingCollection = database.collection("Bookings");
    const appointmentOptionCollections = database.collection("AppointmentOptions");
    
 
-
-// Service Option
-app.get('/appointmentOptions',async(req,res)=>{
+   // Service Option
+app.get('/appointmentOptions',async (req,res)=>{
+  const date = req.query.date;
   const query = {};
-  const result = await appointmentOptionCollections.find(query).toArray();
-  res.send(result)
+  const options = await appointmentOptionCollections.find(query).toArray();
+
+  //get all booking of the frontend provided date
+  const bookingQuery = {appointmentDate:date }
+  const alreadyBooked = await bookingCollection.find(bookingQuery).toArray();
+  //console.log(alreadyBooked);
+
+  options.forEach((option) =>{
+    const optionBooked = alreadyBooked.filter((booked) => booked.serviceName === option.name);
+    const bookedSlots = optionBooked.map(book =>book.slot)
+    const remainingSlot = option.slots.filter(slot=> !bookedSlots.includes(slot))
+    option.slots = remainingSlot;
+    //console.log(bookedSlots);
+  })
+  
+  
+  res.send(options)
+})
+
+  
+
+app.get('/bookings',async (req, res)=>{
+  const email =req.query.email;
+  const query = {email:email}
+  const bookings = await bookingCollection.find(query).toArray();
+  res.send(bookings)
+  
+})
+
+
+
+//booking service
+app.post('/bookings',async(req,res)=>{
+  const bookings=req.body;
+  //console.log(bookings);
+
+  // checked user hav already booking
+  const query ={
+    appointmentDate: bookings.appointmentDate,
+    email: bookings.email,
+    serviceName: bookings.serviceName
+  }
+
+  const alreadyBooked = await bookingCollection.find(query).toArray();
+  if (alreadyBooked.length) {
+    const message =`You already a booking on ${bookings.appointmentDate}`
+    return res.send({acknowledged:false,message})
+  }
+
+  const result =await bookingCollection.insertOne(bookings);
+  res.send(result);
+  
 })
 
 
@@ -45,7 +96,6 @@ app.get('/users',async(res,req)=>{
   const users=await usersCollections.find(query).toArray();
  req.send(users)
 })
-
 
 
 
